@@ -11,6 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.*;
@@ -138,8 +139,8 @@ public class AdsController {
                     )
             })
     @PostMapping("{id}/comments")
-    public ResponseEntity<CommentDto> addComment(@PathVariable Integer id, @RequestBody CreateCommentDto createCommentDto) {
-        return ResponseEntity.ok(commentService.addComment(id, createCommentDto));
+    public ResponseEntity<CommentDto> addComment(@PathVariable Integer id, @RequestBody CreateCommentDto createCommentDto, Authentication authentication) {
+        return ResponseEntity.ok(commentService.addComment(id, createCommentDto, authentication));
     }
 
     @Operation(summary = "Получить информацию об объявлении",
@@ -317,8 +318,8 @@ public class AdsController {
                     )
             })
     @PatchMapping("{adId}/comments/{commentId}")
-    public ResponseEntity<CommentDto> updateComment(@PathVariable Integer adId, @PathVariable Integer commentId, @RequestBody CommentDto commentDto) {
-        return ResponseEntity.ok(commentService.updateComment(commentId, commentDto));
+    public ResponseEntity<CommentDto> updateComment(@PathVariable Integer adId, @PathVariable Integer commentId, @RequestBody CommentDto commentDto, Authentication authentication) {
+        return ResponseEntity.ok(commentService.updateComment(commentId, commentDto, authentication));
     }
 
     @Operation(summary = "Получить объявления авторизованного пользователя",

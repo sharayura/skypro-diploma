@@ -53,3 +53,4 @@ ALTER TABLE images DROP COLUMN file_path;
 
 ALTER TABLE comments ALTER COLUMN created_at TYPE TIMESTAMP USING TIMESTAMP 'epoch' + created_at * INTERVAL '1 millisecond';
 
+ALTER TABLE images DROP COLUMN file_size;
