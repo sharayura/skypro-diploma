@@ -11,6 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -318,8 +319,15 @@ public class AdsController {
                     )
             })
     @PatchMapping("{adId}/comments/{commentId}")
-    public ResponseEntity<CommentDto> updateComment(@PathVariable Integer adId, @PathVariable Integer commentId, @RequestBody CommentDto commentDto, Authentication authentication) {
-        return ResponseEntity.ok(commentService.updateComment(commentId, commentDto, authentication));
+//    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<CommentDto> updateComment(@PathVariable Integer adId, @PathVariable Integer commentId, @RequestBody CommentDto commentDto) {
+        ResponseEntity<String> accessResult = commentService.checkAccessComment(commentId);
+        if (accessResult == null) {
+            CommentDto updatedComment = commentService.updateComment(commentId, commentDto);
+            return ResponseEntity.ok(updatedComment);
+        } else {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
     }
 
     @Operation(summary = "Получить объявления авторизованного пользователя",

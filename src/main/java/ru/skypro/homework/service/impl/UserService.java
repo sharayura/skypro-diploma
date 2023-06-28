@@ -94,7 +94,11 @@ public class UserService implements UserDetailsManager {
         user.setImage(image);
 
     }
-
+    @Transactional
+    public String getCurrentUserRole() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth.getAuthorities().iterator().next().getAuthority();
+    }
 
     @Override
     public void createUser(UserDetails user) {

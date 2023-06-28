@@ -1,5 +1,8 @@
 package ru.skypro.homework.service.impl;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -7,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.skypro.homework.dto.CommentDto;
 import ru.skypro.homework.dto.CreateCommentDto;
 import ru.skypro.homework.dto.ResponseWrapperComment;
+import ru.skypro.homework.dto.Role;
 import ru.skypro.homework.entity.Comment;
 import ru.skypro.homework.mapper.CommentMapper;
 import ru.skypro.homework.repository.AdRepository;
@@ -59,10 +63,9 @@ public class CommentService {
     }
 
     @Transactional
-    public CommentDto updateComment(int commentId, CommentDto commentDto,Authentication authentication) {
+    public CommentDto updateComment(int commentId, CommentDto commentDto) {
         Comment updatedComment = commentRepository.findById(commentId).orElseThrow();
         updatedComment.setText(commentDto.getText());
-        updatedComment.setUser(userRepository.findByUsername(authentication.getName()).orElseThrow(() -> new UsernameNotFoundException("User not found")));
         return commentMapper.toCommentDto(commentRepository.save(updatedComment));
     }
 
@@ -70,5 +73,19 @@ public class CommentService {
     public void deleteCommentsByAdId(Integer adId) {
         commentRepository.deleteCommentsByAdId(adId);
 
+    }
+
+    public ResponseEntity<String> checkAccessComment (Integer id) {
+        Comment comment = commentRepository.findById(id).orElseThrow();
+        String currentUserRole = userService.getCurrentUserRole();
+        String commentCreatorUsername = comment.getUser().getUsername();
+        String currentUsername = userService.getCurrentUsername();
+
+        if (!(currentUserRole.equals("ADMIN") || commentCreatorUsername.equals(currentUsername))) {
+            return null;
+        } else {
+
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
+        }
     }
 }
