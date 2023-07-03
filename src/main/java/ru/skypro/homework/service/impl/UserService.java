@@ -53,6 +53,11 @@ public class UserService implements UserDetailsManager {
         return auth.getName();
     }
 
+    public String getCurrentUserRole() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth.getAuthorities().iterator().next().getAuthority();
+    }
+
     @Transactional
     public boolean setPassword(NewPasswordDto newPasswordDto) {
         User currentUser = userRepository.findByUsername(getCurrentUsername()).orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -87,12 +92,10 @@ public class UserService implements UserDetailsManager {
     public void updateUserImage(MultipartFile file) throws IOException {
         User user = userRepository.findByUsername(getCurrentUsername()).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         Image image = imageRepository.findById(user.getId()).orElse(new Image());
-//        image.setFileSize(file.getSize());
         image.setMediaType(file.getContentType());
         image.setData(file.getBytes());
         imageRepository.save(image);
         user.setImage(image);
-
     }
     @Transactional
     public String getCurrentUserRole() {

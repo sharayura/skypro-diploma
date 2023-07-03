@@ -11,8 +11,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.*;
@@ -66,7 +64,7 @@ public class AdsController {
                             description = "Created",
                             content = @Content(
                                     mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                    schema = @Schema(implementation = AdsDto.class)    //TODO
+                                    schema = @Schema(implementation = AdsDto.class)
                             )
                     ),
                     @ApiResponse(
@@ -140,8 +138,8 @@ public class AdsController {
                     )
             })
     @PostMapping("{id}/comments")
-    public ResponseEntity<CommentDto> addComment(@PathVariable Integer id, @RequestBody CreateCommentDto createCommentDto, Authentication authentication) {
-        return ResponseEntity.ok(commentService.addComment(id, createCommentDto, authentication));
+    public ResponseEntity<CommentDto> addComment(@PathVariable Integer id, @RequestBody CreateCommentDto createCommentDto) {
+        return ResponseEntity.ok(commentService.addComment(id, createCommentDto));
     }
 
     @Operation(summary = "Получить информацию об объявлении",
@@ -199,8 +197,11 @@ public class AdsController {
             })
     @DeleteMapping("{id}")
     public ResponseEntity<?> removeAd(@PathVariable Integer id) {
-        adService.removeAd(id);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        if (adService.hasAdAccess(id)) {
+            adService.removeAd(id);
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
     @Operation(summary = "Обновить информацию об объявлении",
@@ -239,7 +240,10 @@ public class AdsController {
             })
     @PatchMapping("{id}")
     public ResponseEntity<AdsDto> updateAds(@PathVariable Integer id, @RequestBody CreateAdsDto createAdsDto) {
-        return ResponseEntity.ok(adService.updateDto(id, createAdsDto));
+        if (adService.hasAdAccess(id)) {
+            return ResponseEntity.ok(adService.updateDto(id, createAdsDto));
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
     @Operation(summary = "Удалить комментарий",
@@ -274,8 +278,11 @@ public class AdsController {
             })
     @DeleteMapping("{adId}/comments/{commentId}")
     public ResponseEntity<?> deleteComment(@PathVariable Integer adId, @PathVariable Integer commentId) {
-        commentService.deleteComment(commentId);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        if (commentService.hasCommentAccess(commentId)) {
+            commentService.deleteComment(commentId);
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
     @Operation(summary = "Обновить комментарий",
@@ -319,15 +326,11 @@ public class AdsController {
                     )
             })
     @PatchMapping("{adId}/comments/{commentId}")
-//    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<CommentDto> updateComment(@PathVariable Integer adId, @PathVariable Integer commentId, @RequestBody CommentDto commentDto) {
-        ResponseEntity<String> accessResult = commentService.checkAccessComment(commentId);
-        if (accessResult == null) {
-            CommentDto updatedComment = commentService.updateComment(commentId, commentDto);
-            return ResponseEntity.ok(updatedComment);
-        } else {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (commentService.hasCommentAccess(commentId)) {
+            return ResponseEntity.ok(commentService.updateComment(commentId, commentDto));
         }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
     @Operation(summary = "Получить объявления авторизованного пользователя",
@@ -387,7 +390,7 @@ public class AdsController {
                     )
             })
     @PatchMapping(value = "{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<byte[]> updateImage(@PathVariable Integer id, @RequestParam MultipartFile image) throws IOException{
+    public ResponseEntity<byte[]> updateImage(@PathVariable Integer id, @RequestParam MultipartFile image) throws IOException {
         adService.updateAdImage(id, image);
         return ResponseEntity.ok().build();
     }

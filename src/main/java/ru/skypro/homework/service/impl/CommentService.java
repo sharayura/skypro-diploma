@@ -17,7 +17,6 @@ import ru.skypro.homework.repository.AdRepository;
 import ru.skypro.homework.repository.CommentRepository;
 import ru.skypro.homework.repository.UserRepository;
 
-import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -72,7 +71,14 @@ public class CommentService {
     @Transactional
     public void deleteCommentsByAdId(Integer adId) {
         commentRepository.deleteCommentsByAdId(adId);
+    }
 
+    public boolean hasCommentAccess(Integer CommentId) {
+        Comment comment = commentRepository.findById(CommentId).orElseThrow();
+        String currentUserRole = userService.getCurrentUserRole();
+        String commentCreatorUsername = comment.getUser().getUsername();
+        String currentUsername = userService.getCurrentUsername();
+        return currentUserRole.equals("ADMIN") || commentCreatorUsername.equals(currentUsername);
     }
 
     public ResponseEntity<String> checkAccessComment (Integer id) {

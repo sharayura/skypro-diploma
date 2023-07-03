@@ -57,7 +57,6 @@ public class AdService {
         Ad ad = adMapper.toAd(properties);
         Image image = new Image();
 
-//        image.setFileSize(file.getSize());
         image.setMediaType(file.getContentType());
         image.setData(file.getBytes());
         imageRepository.save(image);
@@ -101,7 +100,7 @@ public class AdService {
     }
 
     @Transactional
-    public AdsDto updateDto (Integer id, CreateAdsDto properties) {
+    public AdsDto updateDto(Integer id, CreateAdsDto properties) {
         Ad ad = adRepository.findById(id).orElseThrow();
         ad.setTitle(properties.getTitle());
         ad.setDescription(properties.getDescription());
@@ -111,4 +110,12 @@ public class AdService {
         return adMapper.toAdsDto(ad);
     }
 
+    @Transactional
+    public boolean hasAdAccess(Integer id) {
+        Ad ad = adRepository.findById(id).orElseThrow();
+        String currentUserRole = userService.getCurrentUserRole();
+        String adCreatorUsername = ad.getUser().getUsername();
+        String currentUsername = userService.getCurrentUsername();
+        return currentUserRole.equals("ADMIN") || adCreatorUsername.equals(currentUsername);
+    }
 }
